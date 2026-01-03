@@ -17,6 +17,15 @@ import { Variables } from "./types/hono";
 
 const app = new Hono<{ Variables: Variables }>().basePath("/api/v1");
 
+// Debug: Log DB Host to verify Render Env Var
+const dbUrl = process.env.DATABASE_URL;
+if (dbUrl) {
+    const host = dbUrl.split('@')[1]?.split(':')[0] || 'unknown';
+    console.log(`[DEBUG] Connecting to Database Host: ${host}`);
+} else {
+    console.error('[DEBUG] DATABASE_URL is NOT defined!');
+}
+
 app.onError(errorHandler);
 
 app.use("*", logger());
