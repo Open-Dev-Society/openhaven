@@ -13,6 +13,7 @@ import topicsRoutes from './routes/topics';
 import notificationRoutes from './routes/notifications';
 import savedRoutes from './routes/saved';
 import reportsRoutes from './routes/reports';
+import adminRoutes from './routes/admin';
 import { Variables } from "./types/hono";
 
 const app = new Hono<{ Variables: Variables }>().basePath("/api/v1");
@@ -40,8 +41,6 @@ app.use(
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-
-
 app.route('/auth', authRoutes);
 app.route('/snippets', snippetRoutes);
 app.route('/comments', commentRoutes);
@@ -50,10 +49,6 @@ app.route('/', searchRoutes); // mount at root to match /api/v1/search and /api/
 app.route('/topics', topicsRoutes);
 app.route('/notifications', notificationRoutes);
 app.route('/saved', savedRoutes);
-import adminRoutes from './routes/admin';
-
-// ... other routes
-
 app.route('/admin', adminRoutes);
 app.route('/reports', reportsRoutes);
 
@@ -70,26 +65,8 @@ if (require.main === module) {
         port
     });
 
-    // Socket.IO setup (Only works on persistent servers like Render/Local)
-    // Vercel Serverless does NOT support this.
-    const io = new Server(server as any, {
-        cors: {
-            origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-            methods: ["GET", "POST"],
-            credentials: true
-        }
+    // Initialize Socket.io (Only for persistent servers)
+    import('./lib/socket').then(({ SocketService }) => {
+        SocketService.getInstance().init(server as any);
     });
-
-    // ... (Attach socket logic here if needed, or import it)
-    // For now, we keep the socket initialization inside setupSocket(io) if we had one.
-    // Re-importing the socket logic from our previous implementation if it was inline?
-    // Looking at previous file content, socket logic was inside `serve`.
 }
-port,
-});
-
-import { SocketService } from "./lib/socket";
-// Initialize Socket.io
-SocketService.getInstance().init(server as any);
-
-export default app;
