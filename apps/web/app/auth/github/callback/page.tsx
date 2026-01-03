@@ -24,9 +24,10 @@ function GithubCallbackContent() {
                 alert(`Authenticating... \nAPI: ${API_URL}`);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-                const res = await fetch(`${API_URL}/auth/github`, {
+                // Bypass Proxy for Debugging - Go Direct to Backend
+                const res = await fetch(`https://api-openhaven.vercel.app/api/v1/auth/github`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code }),
