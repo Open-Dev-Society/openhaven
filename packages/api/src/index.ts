@@ -40,7 +40,15 @@ app.use(
     })
 );
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.get("/health", async (c) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        return c.json({ status: "ok", database: "connected" });
+    } catch (error: any) {
+        console.error("Health Check DB Error:", error);
+        return c.json({ status: "error", database: "disconnected", error: error.message }, 500);
+    }
+});
 
 app.route('/auth', authRoutes);
 app.route('/snippets', snippetRoutes);
