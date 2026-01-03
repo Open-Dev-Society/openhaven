@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "npx prisma generate && npx tsc",
+    "build": "npx prisma generate && npx -p typescript tsc",
     "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit",
     "start": "node dist/index.js"
