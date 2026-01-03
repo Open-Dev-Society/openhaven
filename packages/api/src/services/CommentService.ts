@@ -71,7 +71,7 @@ export class CommentService {
         });
 
         // Return map: { commentId: 'upvote' | 'downvote' }
-        return votes.reduce((acc, v) => {
+        return votes.reduce((acc: any, v: any) => {
             acc[v.commentId.toString()] = v.type;
             return acc;
         }, {} as Record<string, string>);

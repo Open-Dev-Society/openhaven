@@ -257,7 +257,7 @@ app.get("/:username/followers", async (c) => {
     return c.json({
         status: "success",
         data: {
-            followers: followers.map(f => f.follower)
+            followers: followers.map((f: any) => f.follower)
         }
     });
 });
@@ -283,7 +283,7 @@ app.get("/:username/following", async (c) => {
     return c.json({
         status: "success",
         data: {
-            following: following.map(f => f.following)
+            following: following.map((f: any) => f.following)
         }
     });
 });

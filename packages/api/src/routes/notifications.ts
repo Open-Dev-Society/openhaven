@@ -35,7 +35,7 @@ app.get("/", auth, async (c) => {
     });
 
     // Convert BigInt to string for JSON serialization
-    const serialized = notifications.map((n) => ({
+    const serialized = notifications.map((n: any) => ({
         id: n.id.toString(),
         type: n.type,
         message: n.message,

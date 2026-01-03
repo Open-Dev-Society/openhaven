@@ -17,7 +17,7 @@ app.get("/", async (c) => {
         const tagCounts: Record<string, number> = {};
         const languageCounts: Record<string, number> = {};
 
-        snippets.forEach(snippet => {
+        snippets.forEach((snippet: any) => {
             // Count tags
             snippet.tags.forEach((tag: string) => {
                 const normalizedTag = tag.toLowerCase();

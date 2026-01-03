@@ -35,7 +35,7 @@ app.get("/", auth, async (c) => {
         prisma.savedSnippet.count({ where: { userId: BigInt(user.id) } }),
     ]);
 
-    const snippets = savedSnippets.map((s) => ({
+    const snippets = savedSnippets.map((s: any) => ({
         ...s.snippet,
         id: s.snippet.id.toString(),
         authorId: s.snippet.authorId.toString(),

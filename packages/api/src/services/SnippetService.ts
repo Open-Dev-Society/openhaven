@@ -81,7 +81,7 @@ export class SnippetService {
         prisma.snippet.update({
             where: { id: snippet.id },
             data: { viewCount: { increment: 1 } }
-        }).catch(err => console.error("Failed to increment view count", err));
+        }).catch((err: any) => console.error("Failed to increment view count", err));
 
         return snippet;
     }
@@ -150,7 +150,7 @@ export class SnippetService {
         // 1. Prepare query
         const skip = (page - 1) * limit;
 
-        const where: Prisma.SnippetWhereInput = {
+        const where: any = {
             deletedAt: null // Only show active snippets
         };
 
@@ -158,7 +158,7 @@ export class SnippetService {
             where.language = language;
         }
 
-        const orderBy: Prisma.SnippetOrderByWithRelationInput =
+        const orderBy: any =
             sort === 'popular'
                 ? { upvotes: 'desc' }
                 : { createdAt: 'desc' };
@@ -207,7 +207,7 @@ export class SnippetService {
         }
 
         // 3. Fetch from DB
-        const where: Prisma.SnippetWhereInput = {
+        const where: any = {
             deletedAt: null
         };
 

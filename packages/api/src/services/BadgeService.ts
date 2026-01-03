@@ -31,7 +31,7 @@ export class BadgeService {
 
         if (!user) return;
 
-        const existingBadgeIds = new Set(user.badges.map(b => b.badgeId));
+        const existingBadgeIds = new Set(user.badges.map((b: any) => b.badgeId));
         const newBadges: typeof BADGES[keyof typeof BADGES][] = [];
 
         // Check: First Snippet

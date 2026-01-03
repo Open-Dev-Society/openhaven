@@ -80,7 +80,7 @@ app.get("/search", async (c) => {
         });
 
         // Re-sort in memory to match Rank (since Prisma findMany won't preserve "IN" order guaranteed)
-        const sortedSnippets = snippets.sort((a, b) => {
+        const sortedSnippets = snippets.sort((a: any, b: any) => {
             return idList.indexOf(a.id) - idList.indexOf(b.id);
         });
 
