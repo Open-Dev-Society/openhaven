@@ -57,13 +57,35 @@ import adminRoutes from './routes/admin';
 app.route('/admin', adminRoutes);
 app.route('/reports', reportsRoutes);
 
-const port = Number(process.env.PORT) || 3002;
-console.log(`Server is running on port ${port}`);
+// Export for Vercel
+export default app;
 
+// Only run server if called directly (not imported)
+if (require.main === module) {
+    const port = Number(process.env.PORT) || 3002;
+    console.log(`Server is running on port ${port}`);
 
-const server = serve({
-    fetch: app.fetch,
-    port,
+    const server = serve({
+        fetch: app.fetch,
+        port
+    });
+
+    // Socket.IO setup (Only works on persistent servers like Render/Local)
+    // Vercel Serverless does NOT support this.
+    const io = new Server(server as any, {
+        cors: {
+            origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+            methods: ["GET", "POST"],
+            credentials: true
+        }
+    });
+
+    // ... (Attach socket logic here if needed, or import it)
+    // For now, we keep the socket initialization inside setupSocket(io) if we had one.
+    // Re-importing the socket logic from our previous implementation if it was inline?
+    // Looking at previous file content, socket logic was inside `serve`.
+}
+port,
 });
 
 import { SocketService } from "./lib/socket";
