@@ -1,6 +1,6 @@
 {
   "name": "haven",
-  "version": "1.0.0",
+  "packageManager": "npm@10.9.0",
   "description": "Community code snippet platform",
   "scripts": {
     "dev": "turbo run dev",
