@@ -112,7 +112,8 @@ if (require.main === module) {
 
     const server = serve({
         fetch: app.fetch,
-        port
+        port,
+        hostname: '0.0.0.0' // Required for Docker container access
     });
 
     // Initialize Socket.io (Only for persistent servers)
