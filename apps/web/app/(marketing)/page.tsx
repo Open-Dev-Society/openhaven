@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import SnippetCard from '@/components/SnippetCard';
 import { API_URL } from '@/lib/config';
 
@@ -57,8 +58,17 @@ const FEATURED_CATEGORIES = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [trending, setTrending] = useState<Snippet[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Redirect logged-in users to feed
+    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+      router.push('/feed');
+      return;
+    }
+  }, [router]);
 
   useEffect(() => {
     fetch(`${API_URL}/trending?limit=6`)
