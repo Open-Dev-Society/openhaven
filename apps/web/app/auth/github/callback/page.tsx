@@ -20,11 +20,20 @@ function GithubCallbackContent() {
 
         const exchangeCode = async () => {
             try {
+                // Debug Alert
+                // alert(`Authenticating... API: ${API_URL}`);
+
                 const res = await fetch(`${API_URL}/auth/github`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error("Auth Error Body:", text);
+                    throw new Error(`Server returned ${res.status}: ${text.substring(0, 50)}...`);
+                }
 
                 const data = await res.json();
 
@@ -34,8 +43,9 @@ function GithubCallbackContent() {
                 } else {
                     setError(data.error || 'Authentication failed');
                 }
-            } catch (err) {
-                setError('Failed to connect to authentication server');
+            } catch (err: any) {
+                console.error("Auth Fetch Error:", err);
+                setError(`Login Failed: ${err.message}`);
             }
         };
 
