@@ -81,40 +81,7 @@ app.post("/github", async (c) => {
     // Mock Mode for Debugging
     if (isMock) {
         log("Mock Mode Active");
-        try {
-            const email = "mock_user@example.com";
-            const githubId = "mock_12345";
-
-            let user = await prisma.user.findFirst({ where: { email } });
-
-            if (!user) {
-                user = await prisma.user.create({
-                    data: {
-                        email,
-                        username: "MockUser",
-                        githubId,
-                        avatarUrl: "https://github.com/ghost.png",
-                        bio: "I am a ghost"
-                    }
-                });
-            }
-
-            const token = await AuthService.generateToken(user.id);
-            return c.json({
-                status: "success",
-                data: {
-                    user: {
-                        id: user.id.toString(),
-                        email: user.email,
-                        username: user.username,
-                        avatarUrl: user.avatarUrl,
-                    },
-                    token,
-                },
-            });
-        } catch (e: any) {
-            return c.json({ status: "error", error: e.message, debugLogs: debugLog }, 500);
-        }
+        return c.json({ status: "success", message: "Mock Mode Echo Works", debugLogs: debugLog });
     }
 
     if (!code) throw new ValidationError("Missing code");
