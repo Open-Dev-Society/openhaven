@@ -96,6 +96,8 @@ app.get("/search", async (c) => {
                 })),
                 total: sortedSnippets.length
             }
+        }, 200, {
+            'Cache-Control': 'public, max-age=60, stale-while-revalidate=30'
         });
     }
 
@@ -178,6 +180,8 @@ app.get("/trending", async (c) => {
                 }
             }))
         }
+    }, 200, {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=30'
     });
 });
 
@@ -250,6 +254,8 @@ app.get("/popular", async (c) => {
                 pages: Math.ceil(total / limit),
             }
         }
+    }, 200, {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=30'
     });
 });
 

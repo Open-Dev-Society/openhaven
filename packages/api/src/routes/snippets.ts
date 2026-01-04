@@ -22,6 +22,7 @@ app.get("/", async (c) => {
         typeof value === 'bigint' ? value.toString() : value
     ));
 
+    c.header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
     return c.json({ status: "success", data: response });
 });
 
@@ -58,6 +59,7 @@ app.get("/:id", async (c) => {
         throw new NotFoundError("Snippet not found");
     }
 
+    c.header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
     return c.json({ status: "success", data: snippet });
 });
 

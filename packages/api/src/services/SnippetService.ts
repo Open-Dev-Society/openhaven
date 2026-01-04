@@ -147,7 +147,13 @@ export class SnippetService {
      * List snippets with pagination, filtering and sorting
      */
     static async listSnippets(page: number, limit: number, language?: string, sort?: string) {
-        // 1. Prepare query
+        const cacheKey = `snippets:list:${page}:${limit}:${language || 'all'}:${sort || 'newest'}`;
+
+        // 1. Try cache
+        const cached = await cacheGet(cacheKey);
+        if (cached) return cached;
+
+        // 2. Prepare query
         const skip = (page - 1) * limit;
 
         const where: any = {
@@ -163,7 +169,7 @@ export class SnippetService {
                 ? { upvotes: 'desc' }
                 : { createdAt: 'desc' };
 
-        // 2. Execute query (in parallel)
+        // 3. Execute query (in parallel)
         const [total, snippets] = await prisma.$transaction([
             prisma.snippet.count({ where }),
             prisma.snippet.findMany({
@@ -179,12 +185,21 @@ export class SnippetService {
             })
         ]);
 
-        return {
+        const result = {
             results: snippets,
             total,
             page,
             totalPages: Math.ceil(total / limit)
         };
+
+        // 4. Cache result (60 seconds short-lived cache for feed)
+        // Convert BigInts
+        const serialized = JSON.parse(JSON.stringify(result, (key, value) =>
+            typeof value === 'bigint' ? value.toString() : value
+        ));
+        await cacheSet(cacheKey, serialized, 60);
+
+        return result;
     }
 
     /**

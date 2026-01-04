@@ -36,7 +36,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             const socketUrl = SOCKET_URL;
             socketInstance = io(socketUrl, {
                 withCredentials: true,
-                autoConnect: false, // Wait until we are ready
+                autoConnect: true, // Enable auto connection
             });
 
             socketInstance.on('connect', () => {
