@@ -76,7 +76,11 @@ export class VoteService {
         await cacheDelete(`snippet:${idOrSlug}`);
         await cacheDeletePattern(`trending:*`);
 
-        await BadgeService.checkAndAwardBadges(snippet.authorId);
+        try {
+            await BadgeService.checkAndAwardBadges(snippet.authorId);
+        } catch (e) {
+            console.error("Failed to check badges:", e);
+        }
 
         return updatedSnippet;
     }
@@ -153,7 +157,12 @@ export class VoteService {
             ]);
 
             // Check badges
-            await BadgeService.checkAndAwardBadges(snippet.authorId);
+            // Check badges
+            try {
+                await BadgeService.checkAndAwardBadges(snippet.authorId);
+            } catch (e) {
+                console.error("Failed to check badges:", e);
+            }
 
             await cacheDelete(`snippet:${idOrSlug}`);
             await cacheDeletePattern(`trending:*`);
@@ -185,7 +194,11 @@ export class VoteService {
             })
         ]);
 
-        await BadgeService.checkAndAwardBadges(snippet.authorId);
+        try {
+            await BadgeService.checkAndAwardBadges(snippet.authorId);
+        } catch (e) {
+            console.error("Failed to check badges:", e);
+        }
 
         await cacheDelete(`snippet:${idOrSlug}`);
         await cacheDeletePattern(`trending:*`);
