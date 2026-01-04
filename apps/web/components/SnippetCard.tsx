@@ -157,17 +157,27 @@ export default function SnippetCard({
         dispatchVoteUpdate(id, newScore);
 
         try {
-            // Backend handles toggling (removing vote if same type is sent)
-            const endpoint = type;
-            const res = await fetch(`${API_URL}/snippets/${id}/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            // Explicitly handle "Remove Vote" vs "Up/Down Vote"
+            // If newType is null, we are removing.
+            // If newType is set, we are upvoting/downvoting.
 
-            if (!res.ok) throw new Error('Failed to vote');
+            if (!newType) {
+                await fetch(`${API_URL}/snippets/${id}/vote`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            } else {
+                const endpoint = newType;
+                await fetch(`${API_URL}/snippets/${id}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            }
         } catch (err) {
             // Revert
             setUserVote(previousVote);

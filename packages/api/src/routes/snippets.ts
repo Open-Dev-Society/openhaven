@@ -192,6 +192,25 @@ app.post("/:id/downvote", auth, async (c) => {
     }
 });
 
+// Remove vote (explicit)
+app.delete("/:id/vote", auth, async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+
+    try {
+        const updatedSnippet = await VoteService.removeVote(id, BigInt(user.id));
+        const currentVote = null; // We explicitly removed it
+
+        const response = JSON.parse(JSON.stringify(updatedSnippet, (key, value) =>
+            typeof value === 'bigint' ? value.toString() : value
+        ));
+
+        return c.json({ status: "success", data: { ...response, userVote: currentVote } });
+    } catch (err: any) {
+        throw err;
+    }
+});
+
 // Get comments
 app.get("/:id/comments", async (c) => {
     const id = c.req.param("id");
