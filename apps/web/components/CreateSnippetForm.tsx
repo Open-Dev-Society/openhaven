@@ -12,14 +12,40 @@ const LANGUAGES = [
     'css', 'json', 'yaml', 'bash', 'shell'
 ];
 
-export default function CreateSnippetForm() {
+interface CreateSnippetFormProps {
+    initialData?: {
+        title: string;
+        description: string;
+        language: string;
+        tags: string;
+        code?: string;
+    };
+    isEdit?: boolean;
+    snippetId?: string;
+}
+
+export default function CreateSnippetForm({ initialData, isEdit = false, snippetId }: CreateSnippetFormProps) {
     const router = useRouter();
+
+    // If editing and description doesn't have the code block but we have code, append it?
+    // Or assume description has it. 
+    // Let's construct initial state safely.
+    const getInitialDescription = () => {
+        if (!initialData) return '';
+        if (initialData.description.includes('```')) return initialData.description;
+        if (initialData.code) {
+            return `${initialData.description}\n\n\`\`\`${initialData.language}\n${initialData.code}\n\`\`\``;
+        }
+        return initialData.description;
+    };
+
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        language: 'javascript',
-        tags: '',
+        title: initialData?.title || '',
+        description: getInitialDescription(),
+        language: initialData?.language || 'javascript',
+        tags: initialData?.tags || '',
     });
+
     const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -81,10 +107,13 @@ export default function CreateSnippetForm() {
             // Extract code from description (find first code block)
             const codeBlockRegex = /```[\w-]*\n([\s\S]*?)\n```/;
             const match = formData.description.match(codeBlockRegex);
-            const extractedCode = match ? match[1] : '// No code block provided';
+            const extractedCode = match ? match[1] : (initialData?.code || '// No code block provided');
 
-            const response = await fetch(`${API_URL}/snippets`, {
-                method: 'POST',
+            const url = isEdit ? `${API_URL}/snippets/${snippetId}` : `${API_URL}/snippets`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -100,12 +129,15 @@ export default function CreateSnippetForm() {
 
             if (!response.ok) {
                 const data = await response.json();
-                setError(data.error || 'Failed to create snippet');
+                setError(data.error || data.message || 'Failed to save snippet');
                 return;
             }
 
             const data = await response.json();
-            router.push(`/snippet/${data.data.id}`);
+            // On update, data.data might be the snippet, on create it is too.
+            // Adjust redirect ID
+            const targetId = isEdit ? snippetId : data.data.id;
+            router.push(`/snippet/${targetId}`);
         } catch (err) {
             setError('Something went wrong');
             console.error(err);
@@ -232,7 +264,7 @@ export default function CreateSnippetForm() {
                 disabled={loading}
                 className="w-full bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40"
             >
-                {loading ? 'Publishing...' : 'Publish Snippet'}
+                {loading ? (isEdit ? 'Saving...' : 'Publishing...') : (isEdit ? 'Save Changes' : 'Publish Snippet')}
             </button>
         </form>
     );
