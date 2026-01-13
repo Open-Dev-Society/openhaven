@@ -6,6 +6,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import CommentSection from '@/components/CommentSection';
+import ShareModal from '@/components/ShareModal';
 import { getToken } from '@/lib/auth';
 import { API_URL } from '@/lib/config';
 
@@ -21,6 +22,7 @@ export default function SnippetDetailPage(props: { params: Promise<{ id: string 
     const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
     const [showActions, setShowActions] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
@@ -222,232 +224,268 @@ export default function SnippetDetailPage(props: { params: Promise<{ id: string 
     const score = votes.upvotes - votes.downvotes;
 
     return (
-        <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="max-w-5xl mx-auto py-12 px-4 relative">
+            {/* Ambient Background Effects */}
+            <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+                <div className="absolute top-[20%] left-[10%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] animate-pulse-slow" />
+                <div className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse-slow delay-1000" />
+            </div>
 
-            {/* Header: Author & Meta */}
-            <div className="bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-t-xl p-6 md:p-8">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <Link href={`/user/${snippet.author.username}`}>
-                            {snippet.author.avatarUrl ? (
-                                <img src={snippet.author.avatarUrl} alt={snippet.author.username} className="w-12 h-12 rounded-full ring-2 ring-slate-100 dark:ring-slate-800" />
-                            ) : (
-                                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xl font-bold text-slate-600 dark:text-slate-300">
-                                    {snippet.author.username[0].toUpperCase()}
+            {/* Main Content Card */}
+            <div className="bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl">
+
+                {/* Header Section */}
+                <div className="p-8 md:p-10 border-b border-slate-200 dark:border-white/5 bg-gradient-to-br from-white/50 to-slate-50/50 dark:from-white/[0.02] dark:to-transparent">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                        <div className="space-y-4 flex-1">
+                            {/* Title */}
+                            <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight font-display">
+                                {snippet.title}
+                            </h1>
+
+                            {/* Author & Meta */}
+                            <div className="flex items-center gap-4 text-sm">
+                                <Link href={`/user/${snippet.author.username}`} className="group flex items-center gap-3">
+                                    {snippet.author.avatarUrl ? (
+                                        <img src={snippet.author.avatarUrl} alt={snippet.author.username} className="w-10 h-10 rounded-full ring-2 ring-slate-100 dark:ring-white/10 group-hover:ring-teal-500 transition-all" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white font-bold shadow-lg shadow-teal-500/20">
+                                            {snippet.author.username[0].toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-slate-900 dark:text-white group-hover:text-teal-500 transition-colors">
+                                            {snippet.author.username}
+                                        </span>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                            {snippet.createdAt ? format(new Date(snippet.createdAt), 'MMM d, yyyy') : 'Unknown Date'}
+                                        </span>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Actions & Voting */}
+                        <div className="flex flex-row md:flex-col items-end gap-4">
+                            {/* Vote Control */}
+                            <div className="flex items-center bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm p-1">
+                                <button
+                                    onClick={() => handleVote('upvote')}
+                                    disabled={isVoting}
+                                    className={`p-2 rounded-md transition-all ${userVote === 'upvote' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'}`}
+                                >
+                                    <svg className="w-5 h-5" fill={userVote === 'upvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                                </button>
+
+                                <span className={`px-3 font-bold text-lg min-w-[40px] text-center ${userVote === 'upvote' ? 'text-teal-600 dark:text-teal-400' : userVote === 'downvote' ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                                    {score}
+                                </span>
+
+                                <button
+                                    onClick={() => handleVote('downvote')}
+                                    disabled={isVoting}
+                                    className={`p-2 rounded-md transition-all ${userVote === 'downvote' ? 'bg-red-500 text-white shadow-lg shadow-red-500/25' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'}`}
+                                >
+                                    <svg className="w-5 h-5" fill={userVote === 'downvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                </button>
+                            </div>
+
+                            {/* Action Buttons Group */}
+                            <div className="flex gap-2">
+                                {/* Share Button */}
+                                <button
+                                    onClick={() => setShowShareModal(true)}
+                                    className="p-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors shadow-sm"
+                                    title="Share Snippet"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                                </button>
+
+                                {/* Menu Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowActions(!showActions)}
+                                        className="p-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors shadow-sm"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                        </svg>
+                                    </button>
+
+                                    {showActions && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setShowActions(false)} />
+                                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 z-20 py-1.5 overflow-hidden ring-1 ring-black/5">
+                                                {isAuthor && (
+                                                    <>
+                                                        <Link
+                                                            href={`/snippet/${params.id}/edit`}
+                                                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                            onClick={() => setShowActions(false)}
+                                                        >
+                                                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                            Edit Snippet
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => { setShowActions(false); setShowDeleteModal(true); }}
+                                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                                                        >
+                                                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            Delete Snippet
+                                                        </button>
+                                                    </>
+                                                )}
+                                                <button
+                                                    onClick={handleReport}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
+                                                    Report Issue
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                            )}
-                        </Link>
-                        <div>
-                            <Link href={`/user/${snippet.author.username}`} className="text-lg font-bold text-slate-900 dark:text-white hover:underline block">
-                                {snippet.author.username}
-                            </Link>
-                            <p className="text-sm text-slate-500">
-                                Posted on {snippet.createdAt ? format(new Date(snippet.createdAt), 'MMM d, yyyy') : 'Unknown Date'}
-                            </p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Actions Menu */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowActions(!showActions)}
-                            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                            </svg>
-                        </button>
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mt-8">
+                        {snippet.tags.map((tag: string) => (
+                            <Link
+                                key={tag}
+                                href={`/feed?q=${encodeURIComponent(tag)}`}
+                                className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-200 dark:hover:border-teal-900/50 transition-all uppercase tracking-wide"
+                            >
+                                #{tag}
+                            </Link>
+                        ))}
+                        <Link href={`/feed?q=${encodeURIComponent(snippet.language)}`} className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-full text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wide">
+                            {snippet.language}
+                        </Link>
+                    </div>
+                </div>
 
-                        {showActions && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setShowActions(false)} />
-                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-20 py-1">
-                                    {isAuthor && (
-                                        <>
-                                            <Link
-                                                href={`/snippet/${params.id}/edit`}
-                                                className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                                                onClick={() => setShowActions(false)}
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                                Edit
-                                            </Link>
-                                            <button
-                                                onClick={() => { setShowActions(false); setShowDeleteModal(true); }}
-                                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                Delete
-                                            </button>
-                                        </>
-                                    )}
-                                    <button
-                                        onClick={handleReport}
-                                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                                        </svg>
-                                        Report
-                                    </button>
-                                </div>
-                            </>
+                {/* Body Content */}
+                <div className="p-8 md:p-10">
+                    <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-a:text-teal-600 dark:prose-a:text-teal-400 hover:prose-a:text-teal-500">
+                        {snippet.description ? (
+                            <ReactMarkdown
+                                components={{
+                                    pre: ({ children }) => {
+                                        // Helper to safely extract content
+                                        const processNode = (node: any): string => {
+                                            if (typeof node === 'string') return node;
+                                            if (Array.isArray(node)) return node.map(processNode).join('');
+                                            if (node?.props) return processNode(node.props.children);
+                                            return '';
+                                        };
+
+                                        // Extract language class
+                                        let language = 'TEXT';
+                                        let content = '';
+
+                                        const codeChild = Array.isArray(children) ? children[0] : children;
+                                        if (codeChild?.props?.className) {
+                                            const match = /language-(\w+)/.exec(codeChild.props.className);
+                                            if (match) language = match[1];
+                                        }
+
+                                        content = processNode(children).replace(/\n$/, '');
+
+                                        return (
+                                            <div className="not-prose my-10 rounded-2xl overflow-hidden bg-[#0d0e11] border border-slate-800 shadow-2xl ring-1 ring-white/5 group relative text-sm leading-relaxed">
+                                                {/* Code Header */}
+                                                <div className="flex items-center justify-between px-5 py-3 bg-white/5 border-b border-white/5 backdrop-blur-sm">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                            <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#ff5f56]/50" />
+                                                            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#ffbd2e]/50" />
+                                                            <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#27c93f]/50" />
+                                                        </div>
+                                                        <span className="ml-2 font-mono text-xs font-bold text-slate-500 uppercase tracking-widest">{language}</span>
+                                                    </div>
+                                                    <CopyButton content={content} />
+                                                </div>
+
+                                                {/* Code Content */}
+                                                <div className="relative">
+                                                    {/* Subtle Grid Background for Code */}
+                                                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none" />
+                                                    <pre className="p-8 overflow-x-auto font-mono text-slate-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                                        <code>{content}</code>
+                                                    </pre>
+                                                </div>
+                                            </div>
+                                        );
+                                    },
+                                    code: ({ children, className, ...props }) => (
+                                        <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-sm text-teal-700 dark:text-teal-300 font-mono font-medium border border-teal-200/50 dark:border-teal-800/50" {...props}>
+                                            {children}
+                                        </code>
+                                    )
+                                }}
+                            >
+                                {snippet.description}
+                            </ReactMarkdown>
+                        ) : (
+                            <p className="italic text-slate-500 font-sans text-center py-10">No description provided.</p>
                         )}
                     </div>
                 </div>
-
-                {/* Vote Control (Minimal) */}
-                <div className="flex items-center gap-2 mb-6">
-                    <div className="flex items-center bg-slate-100 dark:bg-[#2d2d2d] rounded-md overflow-hidden border border-slate-200 dark:border-[#3e3e3e]">
-                        <button
-                            onClick={() => handleVote('upvote')}
-                            disabled={isVoting}
-                            className={`p-1 px-2.5 transition-colors ${userVote === 'upvote' ? 'bg-teal-100 text-teal-600' : 'hover:bg-slate-200 dark:hover:bg-[#343536] text-slate-500'}`}
-                        >
-                            <svg className="w-5 h-5" fill={userVote === 'upvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={userVote === 'upvote' ? 0 : 2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4L3 15h6v5h6v-5h6z" /></svg>
-                        </button>
-
-                        <span className={`px-2 font-bold text-base min-w-[20px] text-center ${userVote === 'upvote' ? 'text-teal-600' : userVote === 'downvote' ? 'text-indigo-500' : 'text-slate-900 dark:text-slate-100'}`}>
-                            {score}
-                        </span>
-
-                        <button
-                            onClick={() => handleVote('downvote')}
-                            disabled={isVoting}
-                            className={`p-1 px-2.5 transition-colors ${userVote === 'downvote' ? 'bg-indigo-100 text-indigo-500' : 'hover:bg-slate-200 dark:hover:bg-[#343536] text-slate-500'}`}
-                        >
-                            <svg className="w-5 h-5" fill={userVote === 'downvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={userVote === 'downvote' ? 0 : 2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20L3 9h6V4h6v5h6z" /></svg>
-                        </button>
-                    </div>
-                    <span className="text-sm text-slate-500 font-medium">{score} points</span>
-                </div>
-
-                {/* Title */}
-                <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight mb-4">
-                    {snippet.title}
-                </h1>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-8">
-                    {snippet.tags.map((tag: string) => (
-                        <Link
-                            key={tag}
-                            href={`/feed?q=${encodeURIComponent(tag)}`}
-                            className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-base cursor-pointer"
-                        >
-                            #{tag}
-                        </Link>
-                    ))}
-                    <Link href={`/feed?q=${encodeURIComponent(snippet.language)}`} className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
-                        #{snippet.language}
-                    </Link>
-                </div>
-
-                {/* Body Content (Markdown Description) */}
-                <div className="prose dark:prose-invert max-w-none mb-8 text-slate-800 dark:text-slate-200 leading-8 text-lg font-serif">
-                    {snippet.description ? (
-                        <ReactMarkdown
-                            components={{
-                                h1: ({ node, ...props }) => <h1 className="font-sans font-bold text-3xl mt-8 mb-4 text-slate-900 dark:text-white" {...props} />,
-                                h2: ({ node, ...props }) => <h2 className="font-sans font-bold text-2xl mt-8 mb-4 text-slate-900 dark:text-white" {...props} />,
-                                h3: ({ node, ...props }) => <h3 className="font-sans font-bold text-xl mt-6 mb-3 text-slate-900 dark:text-white" {...props} />,
-                                p: ({ node, ...props }) => <p className="mb-6 font-serif" {...props} />,
-                                pre: ({ children }) => {
-                                    // Robustly extract content from standard ReactMarkdown structure
-                                    const processNode = (node: any): string => {
-                                        if (typeof node === 'string') return node;
-                                        if (Array.isArray(node)) return node.map(processNode).join('');
-                                        if (node?.props) {
-                                            return processNode(node.props.children);
-                                        }
-                                        return '';
-                                    };
-
-                                    // Extract language from the first child code element if available
-                                    let content = '';
-                                    let language = 'TEXT';
-
-                                    const codeChild = Array.isArray(children) ? children[0] : children;
-                                    if (codeChild?.props?.className) {
-                                        const match = /language-(\w+)/.exec(codeChild.props.className);
-                                        if (match) language = match[1];
-                                    }
-
-                                    content = processNode(children).replace(/\n$/, '');
-
-                                    return (
-                                        <div className="my-8 rounded-xl overflow-hidden bg-[#050505] border border-slate-800 shadow-2xl ring-1 ring-white/5">
-                                            <div className="flex items-center justify-between px-5 py-3 bg-[#0a0a0a] border-b border-slate-800">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex gap-1.5">
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50" />
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/50" />
-                                                    </div>
-                                                    <span className="ml-3 text-xs font-mono text-slate-500 uppercase font-bold tracking-wider">
-                                                        {language}
-                                                    </span>
-                                                </div>
-                                                <CopyButton content={content} />
-                                            </div>
-                                            <pre className="p-8 overflow-x-auto text-[15px] font-mono leading-8 text-gray-300 m-0 font-sans bg-[#050505]">
-                                                <code>{content}</code>
-                                            </pre>
-                                        </div>
-                                    );
-                                },
-                                code: ({ children, className, ...props }) => {
-                                    return (
-                                        <code className="bg-slate-100 dark:bg-[#1a1a1a] px-1.5 py-0.5 rounded text-sm font-mono text-slate-800 dark:text-teal-400 font-sans border border-slate-200 dark:border-slate-800" {...props}>
-                                            {children}
-                                        </code>
-                                    );
-                                }
-                            }}
-                        >
-                            {snippet.description}
-                        </ReactMarkdown>
-                    ) : (
-                        <p className="italic text-slate-500 font-sans">No content provided.</p>
-                    )}
-                </div>
             </div>
 
-            {/* Comment Section Footer */}
-            <div className="mt-8">
-                <CommentSection snippetId={params.id} />
+            {/* Comment Section (Outer Container) */}
+            <div className="mt-12">
+                <div className="bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-8 md:p-10 shadow-lg">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 font-display flex items-center gap-3">
+                        <svg className="w-6 h-6 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        Discussion
+                    </h3>
+                    <CommentSection snippetId={params.id} />
+                </div>
             </div>
 
             {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Snippet</h3>
-                        <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            Are you sure you want to delete this snippet? This action cannot be undone.
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={() => setShowDeleteModal(false)}
-                                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-                            >
-                                {isDeleting ? 'Deleting...' : 'Delete'}
-                            </button>
+            {
+                showDeleteModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white dark:bg-[#151516] rounded-2xl p-8 max-w-md w-full border border-slate-200 dark:border-white/10 shadow-2xl transform transition-all scale-100">
+                            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-6 mx-auto">
+                                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white text-center mb-2 font-display">Delete this Snippet?</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-center mb-8 leading-relaxed">
+                                This action cannot be undone. This will permanently remove the snippet and all associated data.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {isDeleting ? 'Deleting...' : 'Delete Forever'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Share Modal */}
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                title={snippet.title}
+                url={typeof window !== 'undefined' ? window.location.href : ''}
+            />
         </div>
     );
 }
@@ -465,14 +503,14 @@ function CopyButton({ content }: { content: string }) {
         <button
             type="button"
             onClick={handleCopy}
-            className="group flex items-center gap-2 text-xs font-sans font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-wider py-1.5 px-3 rounded-md hover:bg-white/10"
+            className="group flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-all uppercase tracking-wider py-1.5 px-3 rounded-md hover:bg-white/10 active:scale-95"
             title="Copy Code"
         >
-            <span className={`transition-opacity ${copied ? 'opacity-100 text-green-400' : 'opacity-0 group-hover:opacity-100'}`}>
+            <span className={`transition-all duration-300 ${copied ? 'opacity-100 text-teal-400 scale-110' : 'opacity-0 -translate-x-2 w-0 overflow-hidden group-hover:opacity-100 group-hover:w-auto group-hover:translate-x-0'}`}>
                 {copied ? 'Copied!' : 'Copy'}
             </span>
             {copied ? (
-                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             ) : (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
             )}

@@ -90,21 +90,17 @@ export default function CommentSection({ snippetId }: { snippetId: string }) {
     };
 
     return (
-        <div className="bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl p-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                Discussion <span className="text-slate-500 font-normal">({comments.length})</span>
-            </h3>
-
+        <div className="space-y-8">
             {/* Root Input */}
             <CommentInput snippetId={snippetId} onCommentPosted={handleNewComment} />
 
             {/* Comment List */}
             {loading ? (
-                <div className="space-y-4 animate-pulse mt-8">
-                    <div className="h-4 bg-slate-200 dark:bg-slate-700 w-1/4 mb-4 rounded" />
+                <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 w-1/4 mb-4 rounded" />
                 </div>
             ) : (
-                <div className="space-y-6 mt-8">
+                <div className="space-y-6">
                     {rootComments.map((comment) => (
                         <CommentItem
                             key={comment.id}
@@ -333,10 +329,10 @@ function CommentItem({ comment, getReplies, snippetId, onReplyPosted, currentUse
                         <button onClick={() => handleVote('upvote')} className={`p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded ${vote === 'upvote' ? 'text-teal-500' : ''}`}>
                             <svg className="w-4 h-4" fill={vote === 'upvote' ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                         </button>
-                        <span className={`text-xs font-bold ${vote === 'upvote' ? 'text-teal-500' : vote === 'downvote' ? 'text-indigo-500' : ''}`}>
+                        <span className={`text-xs font-bold ${vote === 'upvote' ? 'text-teal-500' : vote === 'downvote' ? 'text-red-500' : ''}`}>
                             {score}
                         </span>
-                        <button onClick={() => handleVote('downvote')} className={`p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded ${vote === 'downvote' ? 'text-indigo-500' : ''}`}>
+                        <button onClick={() => handleVote('downvote')} className={`p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded ${vote === 'downvote' ? 'text-red-500' : ''}`}>
                             <svg className="w-4 h-4" fill={vote === 'downvote' ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </button>
                     </div>
@@ -434,9 +430,9 @@ function CommentInput({ snippetId, parentId, onCommentPosted, autoFocus }: { sni
                 <button
                     type="submit"
                     disabled={submitting || !content.trim()}
-                    className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-full text-xs hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    className="px-4 py-2 bg-teal-600 text-white font-bold rounded-lg text-sm hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-lg shadow-teal-500/20"
                 >
-                    {submitting ? 'Posting...' : parentId ? 'Reply' : 'Comment'}
+                    {submitting ? 'Posting...' : parentId ? 'Reply' : 'Post Comment'}
                 </button>
             </div>
         </form>

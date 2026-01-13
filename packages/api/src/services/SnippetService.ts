@@ -9,17 +9,20 @@ export class SnippetService {
     static async createSnippet(data: any, authorId: bigint) {
         const slug = this.generateSlug(data.title);
 
-        // Validate language/tags if needed, for now trusting inputs or Schema validation
-        // Assuming tags is array of strings
-
-        // Create snippet
-        const snippet = await prisma.snippet.create({
-            data: {
-                ...data,
-                authorId,
-                slug,
-            },
-        });
+        // Transaction: Create snippet AND increment user snippet count
+        const [snippet, _] = await prisma.$transaction([
+            prisma.snippet.create({
+                data: {
+                    ...data,
+                    authorId,
+                    slug,
+                },
+            }),
+            prisma.user.update({
+                where: { id: authorId },
+                data: { snippetCount: { increment: 1 } }
+            })
+        ]);
 
         return snippet;
     }
@@ -130,13 +133,17 @@ export class SnippetService {
         if (!snippet) throw new Error("Snippet not found");
         if (snippet.authorId !== authorId) throw new Error("Unauthorized");
 
-        // Soft delete (Requires deletedAt column in schema)
-        // If deletedAt is missing in schema, this will fail type check. 
-        // Assuming schema has it or I will add it.
-        await prisma.snippet.update({
-            where: { id: sId },
-            data: { deletedAt: new Date() }
-        });
+        // Transaction: Soft delete AND decrement user snippet count
+        await prisma.$transaction([
+            prisma.snippet.update({
+                where: { id: sId },
+                data: { deletedAt: new Date() }
+            }),
+            prisma.user.update({
+                where: { id: authorId },
+                data: { snippetCount: { decrement: 1 } }
+            })
+        ]);
 
         await cacheDelete(`snippet:${idOrSlug}`);
         if (snippet.slug) await cacheDelete(`snippet:${snippet.slug}`);

@@ -212,11 +212,24 @@ app.delete("/:id/vote", auth, async (c) => {
 // Get comments
 app.get("/:id/comments", async (c) => {
     const id = c.req.param("id");
+    console.log(`[DEBUG] GET /:id/comments called with id=${id}`);
     const page = Number(c.req.query("page")) || 1;
-    const limit = Number(c.req.query("limit")) || 100; // Increased limit for threading
+    const limit = Number(c.req.query("limit")) || 100;
 
     try {
-        const result = await CommentService.getComments(id, page, limit);
+        // Resolve slug to ID
+        console.log(`[DEBUG] resolving ID...`);
+        const sId = await SnippetService.resolveToId(id);
+        console.log(`[DEBUG] resolved sId=${sId}`);
+
+        if (!sId) {
+            console.log(`[DEBUG] Snippet not found for id=${id}`);
+            throw new NotFoundError("Snippet not found");
+        }
+
+        console.log(`[DEBUG] Fetching comments for sId=${sId}`);
+        const result = await CommentService.getComments(sId.toString(), page, limit);
+        console.log(`[DEBUG] Fetched ${result.comments.length} comments`);
 
         const response = JSON.parse(JSON.stringify(result, (key, value) =>
             typeof value === 'bigint' ? value.toString() : value
@@ -224,6 +237,7 @@ app.get("/:id/comments", async (c) => {
 
         return c.json({ status: "success", data: response });
     } catch (err: any) {
+        console.error(`[DEBUG] Error in GET /:id/comments:`, err);
         throw err;
     }
 });
@@ -234,6 +248,12 @@ app.post("/:id/comments", auth, async (c) => {
     const id = c.req.param("id");
     const { content, parentId } = await c.req.json();
 
+    // Resolve slug to ID
+    const sId = await SnippetService.resolveToId(id);
+    if (!sId) {
+        throw new NotFoundError("Snippet not found");
+    }
+
     if (!content) {
         throw new ValidationError("Content required");
     }
@@ -241,42 +261,47 @@ app.post("/:id/comments", auth, async (c) => {
     try {
         // Get snippet info for notification
         const snippetInfo = await prisma.snippet.findUnique({
-            where: { id: BigInt(id) },
+            where: { id: sId },
             select: { id: true, authorId: true },
         });
 
-        const comment = await CommentService.addComment(id, BigInt(user.id), content, parentId);
+        const comment = await CommentService.addComment(sId.toString(), BigInt(user.id), content, parentId);
 
         // Create notification for snippet author (if not self-comment)
         if (snippetInfo && Number(snippetInfo.authorId) !== user.id) {
-            const notification = await prisma.notification.create({
-                data: {
-                    userId: snippetInfo.authorId,
-                    type: "comment",
-                    message: "commented on your snippet",
-                    actorId: BigInt(user.id),
-                    snippetId: snippetInfo.id,
-                },
-                include: {
-                    actor: {
-                        select: { id: true, username: true, avatarUrl: true }
+            try {
+                const notification = await prisma.notification.create({
+                    data: {
+                        userId: snippetInfo.authorId,
+                        type: "comment",
+                        message: "commented on your snippet",
+                        actorId: BigInt(user.id),
+                        snippetId: snippetInfo.id,
                     },
-                    snippet: {
-                        select: { id: true, title: true, slug: true }
+                    include: {
+                        actor: {
+                            select: { id: true, username: true, avatarUrl: true }
+                        },
+                        snippet: {
+                            select: { id: true, title: true, slug: true }
+                        }
                     }
-                }
-            });
+                });
 
-            // Emit real-time notification
-            const SocketService = (await import("../lib/socket")).SocketService;
-            SocketService.getInstance().emitNotification(snippetInfo.authorId.toString(), {
-                ...notification,
-                id: notification.id.toString(),
-                actorId: notification.actorId.toString(),
-                userId: notification.userId.toString(),
-                snippetId: notification.snippetId?.toString(),
-                createdAt: notification.createdAt.toISOString()
-            });
+                // Emit real-time notification
+                const SocketService = (await import("../lib/socket")).SocketService;
+                SocketService.getInstance().emitNotification(snippetInfo.authorId.toString(), {
+                    ...notification,
+                    id: notification.id.toString(),
+                    actorId: notification.actorId.toString(),
+                    userId: notification.userId.toString(),
+                    snippetId: notification.snippetId?.toString(),
+                    createdAt: notification.createdAt.toISOString()
+                });
+            } catch (notifErr) {
+                console.error("[DEBUG] Failed to send notification/socket:", notifErr);
+                // Do not throw, allow the request to complete successfully since comment is saved
+            }
         }
 
         const response = JSON.parse(JSON.stringify(comment, (key, value) =>

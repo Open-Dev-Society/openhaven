@@ -219,14 +219,18 @@ app.post("/:username/follow", auth, async (c) => {
             ]);
 
             // Emit real-time notification
-            const SocketService = (await import("../lib/socket")).SocketService;
-            SocketService.getInstance().emitNotification(followingId.toString(), {
-                ...notification,
-                id: notification.id.toString(),
-                actorId: notification.actorId.toString(),
-                userId: notification.userId.toString(),
-                createdAt: notification.createdAt.toISOString()
-            });
+            try {
+                const SocketService = (await import("../lib/socket")).SocketService;
+                SocketService.getInstance().emitNotification(followingId.toString(), {
+                    ...notification,
+                    id: notification.id.toString(),
+                    actorId: notification.actorId.toString(),
+                    userId: notification.userId.toString(),
+                    createdAt: notification.createdAt.toISOString()
+                });
+            } catch (socketError) {
+                console.warn('Failed to emit socket notification:', socketError);
+            }
 
             return c.json({ status: "success", data: { isFollowing: true } });
         }
@@ -308,6 +312,79 @@ app.get("/:username/is-following", auth, async (c) => {
     return c.json({
         status: "success",
         data: { isFollowing: !!follows }
+    });
+});
+
+// Force Sync User Stats (Drift Correction)
+app.post("/:username/sync-stats", auth, async (c) => {
+    const username = c.req.param("username");
+    const currentUser = c.get("user");
+
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (!user) return c.json({ status: "error", error: "User not found" }, 404);
+
+    // Only allow self or admin (add admin check later if needed)
+    if (user.id !== BigInt(currentUser.id)) {
+        return c.json({ status: "error", error: "Unauthorized" }, 403);
+    }
+
+    // 1. Count Snippets
+    const snippetCount = await prisma.snippet.count({
+        where: { authorId: user.id, deletedAt: null }
+    });
+
+    // 2. Calculate Reputation (Ground Truth from Ratings)
+    // Find all snippets by user
+    const userSnippets = await prisma.snippet.findMany({
+        where: { authorId: user.id },
+        select: { id: true }
+    });
+    const snippetIds = userSnippets.map(s => s.id);
+
+    // Aggregate ratings on these snippets
+    const ratings = await prisma.rating.groupBy({
+        by: ['type'],
+        where: { snippetId: { in: snippetIds } },
+        _count: true
+    });
+
+    let upvotes = 0;
+    let downvotes = 0;
+
+    ratings.forEach(r => {
+        if (r.type === 'upvote') upvotes = r._count;
+        if (r.type === 'downvote') downvotes = r._count;
+    });
+
+    const calculatedReputation = (upvotes * 10) - (downvotes * 2);
+
+    // 3. Count Followers/Following
+    const followerCount = await prisma.follows.count({ where: { followingId: user.id } });
+    const followingCount = await prisma.follows.count({ where: { followerId: user.id } });
+
+    // 4. Update User
+    const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            snippetCount,
+            reputation: calculatedReputation,
+            followerCount,
+            // followingCount is not stored in DB schema usually, but if it is, update it.
+            // Based on earlier read, it wasn't in select, so likely virtual.
+            // But if it IS in schema, we'd update it. The previous code didn't update it.
+            // We'll stick to what we know is in schema: snippetCount, reputation, followerCount.
+        }
+    });
+
+    return c.json({
+        status: "success",
+        data: {
+            snippetCount,
+            reputation: calculatedReputation,
+            followerCount,
+            followingCount,
+            message: "Stats synchronized successfully"
+        }
     });
 });
 

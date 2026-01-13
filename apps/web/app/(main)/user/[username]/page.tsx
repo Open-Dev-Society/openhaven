@@ -189,12 +189,37 @@ export default function UserProfile(props: { params: Promise<{ username: string 
                             {/* Actions */}
                             <div>
                                 {isOwnProfile ? (
-                                    <Link
-                                        href="/profile/edit"
-                                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md font-medium text-slate-700 dark:text-white transition-colors"
-                                    >
-                                        Edit Profile
-                                    </Link>
+                                    <div className="flex gap-3">
+                                        <Link
+                                            href="/profile/edit"
+                                            className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md font-medium text-slate-700 dark:text-white transition-colors"
+                                        >
+                                            Edit Profile
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                const token = getToken();
+                                                fetch(`${API_URL}/users/${user.username}/sync-stats`, {
+                                                    method: 'POST',
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                })
+                                                    .then(res => res.json())
+                                                    .then(data => {
+                                                        if (data.status === 'success') {
+                                                            setUser(prev => prev ? ({ ...prev, ...data.data }) : null);
+                                                            alert('Stats synchronized!');
+                                                        } else {
+                                                            alert('Failed: ' + data.error);
+                                                        }
+                                                    })
+                                                    .catch(err => alert('Error syncing stats'));
+                                            }}
+                                            className="px-4 py-2 bg-transparent border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-teal-500 hover:border-teal-500 rounded-md font-medium transition-colors"
+                                            title="Recalculate stats if they look wrong"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        </button>
+                                    </div>
                                 ) : (
                                     <FollowButton
                                         username={user.username}

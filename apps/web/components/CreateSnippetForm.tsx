@@ -147,126 +147,145 @@ export default function CreateSnippetForm({ initialData, isEdit = false, snippet
     };
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
-            {error && (
-                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 p-4 rounded-lg">
-                    {error}
-                </div>
-            )}
+        <div className="relative">
+            {/* Ambient Background Effects */}
+            <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+                <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[120px] animate-pulse-slow" />
+                <div className="absolute bottom-[10%] right-[20%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse-slow delay-1000" />
+            </div>
 
-            {/* Title & Language Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+            <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-8 bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
+                {/* Header */}
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white font-display mb-4">
+                        {isEdit ? 'Edit Snippet' : 'Create New Snippet'}
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-lg">
+                        Share your code with the world. Beautified automatically.
+                    </p>
+                </div>
+
+                {error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 p-4 rounded-xl flex items-center gap-3">
+                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {error}
+                    </div>
+                )}
+
+                {/* Title & Language Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Title</label>
+                        <input
+                            type="text"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleChange}
+                            required
+                            placeholder="Snippet Title"
+                            className="w-full px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white font-medium text-lg placeholder:text-slate-400"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Language</label>
+                        <div className="relative">
+                            <select
+                                name="language"
+                                value={formData.language}
+                                onChange={handleChange}
+                                className="w-full appearance-none px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white font-medium"
+                            >
+                                {LANGUAGES.map(lang => (
+                                    <option key={lang} value={lang}>{lang.charAt(0).toUpperCase() + lang.slice(1)}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Markdown Description Editor */}
+                <div>
+                    <div className="flex justify-between items-end mb-2">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">Content</label>
+                        <div className="flex bg-slate-100 dark:bg-[#272729] rounded-lg p-0.5">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('write')}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'write' ? 'bg-white dark:bg-[#1A1A1B] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                Write
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('preview')}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'preview' ? 'bg-white dark:bg-[#1A1A1B] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                Preview
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="border border-slate-200 dark:border-[#343536] rounded-xl overflow-hidden bg-white dark:bg-[#1A1A1B] focus-within:ring-2 focus-within:ring-teal-500 transition-all shadow-sm">
+                        {activeTab === 'write' ? (
+                            <>
+                                {/* Toolbar */}
+                                <div className="flex items-center gap-1 p-2 border-b border-slate-100 dark:border-[#272729] bg-slate-50 dark:bg-[#1e1e1f] sticky top-0 z-10">
+                                    <ToolbarBtn onClick={() => insertMarkdown('bold')} label="Bold" icon={<span className="font-bold">B</span>} />
+                                    <ToolbarBtn onClick={() => insertMarkdown('italic')} label="Italic" icon={<span className="italic font-serif">I</span>} />
+                                    <div className="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1" />
+                                    <ToolbarBtn onClick={() => insertMarkdown('link')} label="Link" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>} />
+                                    <ToolbarBtn onClick={() => insertMarkdown('code-block')} label="Code Block" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
+                                    <ToolbarBtn onClick={() => insertMarkdown('list')} label="List" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>} />
+                                </div>
+                                <textarea
+                                    id="description-input"
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    placeholder="Share your knowledge... Use the Code Block button to insert snippets."
+                                    className="w-full p-6 min-h-[400px] bg-transparent resize-y outline-none dark:text-white font-mono text-sm leading-relaxed"
+                                />
+                            </>
+                        ) : (
+                            <div className="p-8 min-h-[400px] prose dark:prose-invert max-w-none font-serif leading-8 text-lg">
+                                {formData.description ? (
+                                    <MarkdownPreview content={formData.description} />
+                                ) : (
+                                    <span className="text-slate-400 italic font-sans">Nothing to preview</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 font-sans">
+                        Tip: You can add multiple code blocks. The first one will be used for the card preview.
+                    </p>
+                </div>
+
+                {/* Tags */}
+                <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tags</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="tags"
+                        value={formData.tags}
                         onChange={handleChange}
-                        required
-                        placeholder="Snippet Title"
-                        className="w-full px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white font-medium text-lg placeholder:text-slate-400"
+                        placeholder="e.g. react, hooks, sorting (comma separated)"
+                        className="w-full px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white"
                     />
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Language</label>
-                    <div className="relative">
-                        <select
-                            name="language"
-                            value={formData.language}
-                            onChange={handleChange}
-                            className="w-full appearance-none px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white font-medium"
-                        >
-                            {LANGUAGES.map(lang => (
-                                <option key={lang} value={lang}>{lang.charAt(0).toUpperCase() + lang.slice(1)}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Markdown Description Editor */}
-            <div>
-                <div className="flex justify-between items-end mb-2">
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">Content</label>
-                    <div className="flex bg-slate-100 dark:bg-[#272729] rounded-lg p-0.5">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('write')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'write' ? 'bg-white dark:bg-[#1A1A1B] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                        >
-                            Write
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('preview')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'preview' ? 'bg-white dark:bg-[#1A1A1B] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                        >
-                            Preview
-                        </button>
-                    </div>
-                </div>
-
-                <div className="border border-slate-200 dark:border-[#343536] rounded-xl overflow-hidden bg-white dark:bg-[#1A1A1B] focus-within:ring-2 focus-within:ring-teal-500 transition-all shadow-sm">
-                    {activeTab === 'write' ? (
-                        <>
-                            {/* Toolbar */}
-                            <div className="flex items-center gap-1 p-2 border-b border-slate-100 dark:border-[#272729] bg-slate-50 dark:bg-[#1e1e1f] sticky top-0 z-10">
-                                <ToolbarBtn onClick={() => insertMarkdown('bold')} label="Bold" icon={<span className="font-bold">B</span>} />
-                                <ToolbarBtn onClick={() => insertMarkdown('italic')} label="Italic" icon={<span className="italic font-serif">I</span>} />
-                                <div className="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1" />
-                                <ToolbarBtn onClick={() => insertMarkdown('link')} label="Link" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>} />
-                                <ToolbarBtn onClick={() => insertMarkdown('code-block')} label="Code Block" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
-                                <ToolbarBtn onClick={() => insertMarkdown('list')} label="List" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>} />
-                            </div>
-                            <textarea
-                                id="description-input"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Share your knowledge... Use the Code Block button to insert snippets."
-                                className="w-full p-6 min-h-[400px] bg-transparent resize-y outline-none dark:text-white font-mono text-sm leading-relaxed"
-                            />
-                        </>
-                    ) : (
-                        <div className="p-8 min-h-[400px] prose dark:prose-invert max-w-none font-serif leading-8 text-lg">
-                            {formData.description ? (
-                                <MarkdownPreview content={formData.description} />
-                            ) : (
-                                <span className="text-slate-400 italic font-sans">Nothing to preview</span>
-                            )}
-                        </div>
-                    )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2 font-sans">
-                    Tip: You can add multiple code blocks. The first one will be used for the card preview.
-                </p>
-            </div>
-
-            {/* Tags */}
-            <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Tags</label>
-                <input
-                    type="text"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="e.g. react, hooks, sorting (comma separated)"
-                    className="w-full px-4 py-3 bg-white dark:bg-[#1A1A1B] border border-slate-200 dark:border-[#343536] rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all dark:text-white"
-                />
-            </div>
-
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40"
-            >
-                {loading ? (isEdit ? 'Saving...' : 'Publishing...') : (isEdit ? 'Save Changes' : 'Publish Snippet')}
-            </button>
-        </form>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40"
+                >
+                    {loading ? (isEdit ? 'Saving...' : 'Publishing...') : (isEdit ? 'Save Changes' : 'Publish Snippet')}
+                </button>
+            </form>
+        </div>
     );
 }
 
