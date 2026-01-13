@@ -6,6 +6,7 @@ import { dispatchVoteUpdate } from '@/lib/events';
 import { useSocket } from '@/context/SocketContext';
 import ShareModal from '@/components/ShareModal';
 import { API_URL } from '@/lib/config';
+import { Eye, ThumbsUp, ThumbsDown, Bookmark, Share2, MessageSquare } from 'lucide-react';
 
 interface SnippetCardProps {
     id: string;
@@ -222,27 +223,24 @@ export default function SnippetCard({
     const score = votes.upvotes - votes.downvotes;
 
     return (
-        <div className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-teal-500/50 hover:shadow-lg transition-all cursor-pointer overflow-hidden">
+        <div className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl hover:border-teal-500/50 hover:shadow-lg transition-all cursor-pointer overflow-hidden relative">
 
             {/* Header with Language Badge */}
             <div className="px-5 pt-5 pb-3">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="px-3 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-wide">
+                    <span className="px-3 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-wide border border-teal-100 dark:border-teal-500/20">
                         {language}
                     </span>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                         <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
+                            <Eye size={14} />
                             {viewCount}
                         </span>
                     </div>
                 </div>
 
                 <Link href={`/snippet/${slug || id}`}>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-snug group-hover:text-teal-600 transition-colors">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-snug group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                         {title}
                     </h3>
                 </Link>
@@ -254,7 +252,7 @@ export default function SnippetCard({
                             <Link
                                 key={tag}
                                 href={`/feed?q=${encodeURIComponent(tag)}`}
-                                className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                className="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                                 onClick={(e) => e.stopPropagation()} // Prevent card click
                             >
                                 #{tag}
@@ -265,14 +263,14 @@ export default function SnippetCard({
             </div>
 
             {/* Action Bar */}
-            <div className="px-5 py-3 flex items-center gap-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
+            <div className="px-5 py-3 flex items-center gap-4 border-t border-slate-100 dark:border-white/5 text-sm text-slate-500 mt-auto bg-slate-50/50 dark:bg-white/[0.02]">
                 {/* Votes */}
                 <div className="flex items-center gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); handleVote('upvote'); }}
                         className={`p-1 rounded transition-colors ${userVote === 'upvote' ? 'text-teal-600' : 'hover:text-teal-600'}`}
                     >
-                        <svg className="w-4 h-4" fill={userVote === 'upvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                        <ThumbsUp size={16} fill={userVote === 'upvote' ? "currentColor" : "none"} />
                     </button>
                     <span className={`font-bold min-w-[20px] text-center ${userVote === 'upvote' ? 'text-teal-600' : userVote === 'downvote' ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
                         {score}
@@ -281,16 +279,16 @@ export default function SnippetCard({
                         onClick={(e) => { e.stopPropagation(); handleVote('downvote'); }}
                         className={`p-1 rounded transition-colors ${userVote === 'downvote' ? 'text-red-500' : 'hover:text-red-500'}`}
                     >
-                        <svg className="w-4 h-4" fill={userVote === 'downvote' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        <ThumbsDown size={16} fill={userVote === 'downvote' ? "currentColor" : "none"} />
                     </button>
                 </div>
 
                 {/* Author */}
-                <Link href={`/user/${author?.username}`} className="flex items-center gap-2 hover:text-teal-500 transition-colors">
-                    <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                <Link href={`/user/${author?.username}`} className="flex items-center gap-2 hover:text-teal-500 transition-colors ml-2">
+                    <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
                         {author?.username?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <span className="text-xs">{author?.username}</span>
+                    <span className="text-xs font-medium">{author?.username}</span>
                 </Link>
 
                 {/* Actions Group */}
@@ -301,9 +299,7 @@ export default function SnippetCard({
                         className="p-1 hover:text-teal-500 transition-colors"
                         title="Share"
                     >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
+                        <Share2 size={16} />
                     </button>
 
                     {/* Save button */}
@@ -313,9 +309,7 @@ export default function SnippetCard({
                         className={`p-1 transition-colors ${isSaved ? 'text-teal-500' : 'hover:text-teal-500'}`}
                         title={isSaved ? 'Unsave' : 'Save'}
                     >
-                        <svg className="w-4 h-4" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
+                        <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} />
                     </button>
                 </div>
             </div>

@@ -147,38 +147,47 @@ app.get("/search", async (c) => {
 
 // Trending
 app.get("/trending", async (c) => {
-    const limit = Number(c.req.query("limit")) || 10;
-    // timeRange is ignored for MVP, requires created_at filter
+    try {
+        const limit = Number(c.req.query("limit")) || 10;
+        // timeRange is ignored for MVP, requires created_at filter
 
-    const snippets = await prisma.snippet.findMany({
-        take: limit,
-        orderBy: { upvotes: "desc" },
-        include: {
-            author: {
-                select: {
-                    id: true,
-                    username: true,
-                    avatarUrl: true,
+        console.log("Fetching trending snippets with limit:", limit);
+
+        const snippets = await prisma.snippet.findMany({
+            take: limit,
+            orderBy: { upvotes: "desc" },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
                 },
             },
-        },
-    });
+        });
 
-    return c.json({
-        status: "success",
-        data: {
-            timeRange: "all",
-            snippets: snippets.map((s: any) => ({
-                ...s,
-                id: s.id.toString(),
-                authorId: s.authorId.toString(),
-                author: {
-                    ...s.author,
-                    id: s.author.id.toString()
-                }
-            }))
-        }
-    });
+        console.log("Found trending snippets:", snippets.length);
+
+        return c.json({
+            status: "success",
+            data: {
+                timeRange: "all",
+                snippets: snippets.map((s: any) => ({
+                    ...s,
+                    id: s.id.toString(),
+                    authorId: s.authorId.toString(),
+                    author: {
+                        ...s.author,
+                        id: s.author.id.toString()
+                    }
+                }))
+            }
+        });
+    } catch (error) {
+        console.error("FATAL ERROR in /trending:", error);
+        return c.json({ status: "error", error: "Failed to fetch trending", details: String(error) }, 500);
+    }
 });
 
 // Popular - with sorting options

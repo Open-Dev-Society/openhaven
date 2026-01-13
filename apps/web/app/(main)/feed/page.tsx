@@ -109,20 +109,24 @@ function FeedContent() {
     return (
         <div className="space-y-6">
             {/* Feed Header / Filters */}
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white">
                     {currentQuery ? `Results for "${currentQuery}"` : 'Your Feed'}
                 </h1>
-                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-full">
+
+                <div className="glass-panel p-1 rounded-xl flex gap-1 shadow-sm">
                     {SORT_OPTIONS.map((opt) => (
                         <button
                             key={opt.value}
                             onClick={() => handleSortChange(opt.value)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${currentSort === opt.value
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative ${currentSort === opt.value
+                                ? 'text-teal-600 dark:text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5'
                                 }`}
                         >
+                            {currentSort === opt.value && (
+                                <span className="absolute inset-0 bg-white dark:bg-white/10 rounded-lg shadow-sm -z-10 animate-in fade-in zoom-in duration-200" />
+                            )}
                             {opt.label}
                         </button>
                     ))}

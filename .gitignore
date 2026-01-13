@@ -29,3 +29,6 @@ out/
 # Logs
 *.log
 npm-debug.log*
+
+# Turbo
+.turbo

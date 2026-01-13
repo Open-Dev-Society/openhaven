@@ -1,8 +1,21 @@
 import type { Metadata } from 'next';
+import { Outfit, Sixtyfour } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { SocketProvider } from '@/context/SocketContext';
 import { Toaster } from 'sonner';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
+
+const sixtyfour = Sixtyfour({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-logo',
+});
 
 export const metadata: Metadata = {
   title: 'OPENHAVEN - Code Snippet Manager',
@@ -15,26 +28,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${sixtyfour.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet" />
+        {/* Removed manual Google Fonts links in favor of next/font */}
       </head>
-      <body className="bg-slate-50 dark:bg-slate-900">
+      <body className="bg-slate-50 dark:bg-[#0a0a0a] font-sans antialiased text-slate-900 dark:text-slate-100">
         <Providers>
           <SocketProvider>
             {children}
             <Toaster position="bottom-right" theme="system" />
           </SocketProvider>
         </Providers>
-        {/* Grid Background Overlay - on top */}
+        {/* Refined Grid Background Overlay */}
         <div
           className="fixed inset-0 pointer-events-none"
           style={{
-            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
-            zIndex: -1
+            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)`,
+            backgroundSize: '40px 40px',
+            zIndex: -1,
+            maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)'
+          }}
+        />
+        <div className="fixed inset-0 pointer-events-none opacity-20 dark:opacity-10"
+          style={{
+            background: 'radial-gradient(circle at 50% 0%, rgba(120, 119, 198, 0.3), transparent 50%)'
           }}
         />
       </body>
